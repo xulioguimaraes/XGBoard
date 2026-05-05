@@ -1,10 +1,10 @@
-# 🚀 XGBoard - Gerenciador de Clipboard Inteligente
+# XGBoard
+
+Gerenciador de área de transferência nativo para macOS, no estilo Win+V do Windows.
 
 <div align="center">
 
 ![XGBoard](Resources/XGBoard-Icon.png)
-
-**O clipboard manager mais elegante e rápido para macOS**
 
 [![macOS](https://img.shields.io/badge/macOS-13.0+-blue.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)](https://swift.org/)
@@ -14,204 +14,121 @@
 
 ---
 
-## ✨ **RECURSOS PRINCIPAIS**
+## Recursos
 
-- 🎯 **Atalho Global**: `Cmd+F2` para acesso instantâneo
-- 📋 **Histórico Inteligente**: Até 20 itens de clipboard
-- 🔍 **Busca Rápida**: Encontre qualquer item digitando
-- 🖼️ **Suporte Completo**: Texto, imagens e conteúdo formatado
-- ⚡ **Performance Zero**: Não afeta a velocidade do sistema
-- 🎨 **Interface Moderna**: Design nativo do macOS
-- 🔐 **Privacidade**: Dados ficam apenas no seu Mac
-
----
-
-## 🎬 **DEMONSTRAÇÃO**
-
-```
-Cmd+F2 → Interface aparece → Digite para buscar → Enter para colar
-```
-
-**Funciona em qualquer aplicativo**: Finder, Safari, Xcode, Slack, Discord, etc.
+- Atalho global **Cmd+Shift+V** (configurável). Implementado com Carbon `RegisterEventHotKey`, **não exige permissão de Acessibilidade** e funciona desde o login.
+- Picker compacto estilo Spotlight (`NSPanel` borderless com vibrancy `NSVisualEffectView`), aberto no cursor.
+- Suporte a texto, imagens, RTF e arquivos.
+- Busca em tempo real e favoritos.
+- Histórico configurável (padrão: 500 itens; 10–2000).
+- Persistência em `~/Library/Application Support/XGBoard/` com limite de 200 MB e LRU (favoritos preservados).
+- Deduplicação por SHA-256: copiar o mesmo conteúdo não duplica entradas.
+- Apenas uma representação por copy (uma imagem com 3 formatos não vira 3 entradas).
+- Aparência nativa com material `.popover`, cantos arredondados, sombra e fechamento automático ao perder foco.
 
 ---
 
-## 💾 **INSTALAÇÃO RÁPIDA**
+## Como usar
 
-### 🏆 **Método Recomendado: DMG**
+| Atalho | Ação |
+|--------|------|
+| `Cmd+Shift+V` | Abre o picker no cursor |
+| `↑` / `↓` | Navega na lista |
+| `↩` ou clique | Copia o item selecionado e fecha |
+| `⎋` ou clique fora | Fecha sem copiar |
+| Clique direito | Favoritar / apagar |
 
-1. **📥 Baixe**: `XGBoard-v1.1-Installer.dmg`
-2. **📁 Abra** o arquivo DMG
-3. **🎯 Arraste** XGBoard para Applications
-4. **🚀 Execute** e conceda permissão de acessibilidade
-
-### 📦 **Outros Métodos**
-
-- **ZIP**: `XGBoard-v1.1-macOS.zip` → Extrair → Mover para Applications
-- **Automático**: `./fix_and_install.sh` (para desenvolvedores)
-
-### 🔐 **Configuração de Permissões**
-
-⚠️ **OBRIGATÓRIO**: Para atalhos globais funcionarem:
-
-1. Primeira execução → Clique "Abrir Configurações do Sistema"
-2. `Privacidade e Segurança` → `Acessibilidade`
-3. 🔓 Clique no cadeado → Digite senha
-4. ✅ Marque `XGBoard`
-
-**📖 [Guia Completo de Instalação](INSTALAÇÃO.md)**
+Atalho configurável em **Configurações → Atalho Global** (gravador de combinação).
 
 ---
 
-## 🎯 **COMO USAR**
+## Instalação
 
-| Ação | Comando | Resultado |
-|------|---------|-----------|
-| **Abrir Clipboard** | `Cmd+F2` | Interface aparece |
-| **Buscar Item** | `Digite texto` | Filtra resultados |
-| **Navegar** | `↑↓` ou `Mouse` | Seleciona item |
-| **Colar** | `Enter` ou `Duplo-click` | Cola no app atual |
-| **Fechar** | `Esc` | Fecha interface |
-
-### 💡 **Dicas Pro**
-
-- 📌 **Ícone na barra**: Clique para abrir rapidamente
-- 🔍 **Busca inteligente**: Busca em qualquer parte do texto
-- 🖼️ **Preview de imagens**: Vê imagens antes de colar
-- 📱 **Sempre disponível**: Funciona mesmo em fullscreen
-
----
-
-## 🛠️ **PROBLEMAS COMUNS**
-
-<details>
-<summary>❌ "O app não pode ser aberto"</summary>
-
-**Solução**: `Configurações` → `Privacidade e Segurança` → `Abrir mesmo assim`
-</details>
-
-<details>
-<summary>🔄 Permissões solicitadas toda vez</summary>
-
-**Solução**: Execute `./fix_permissions_persistence.sh`
-</details>
-
-<details>
-<summary>👻 Entrada fantasma na acessibilidade</summary>
-
-**Solução**: Execute `./fix_ghost_entry.sh`
-</details>
-
-**📖 [Resolução Completa de Problemas](INSTALAÇÃO.md#-resolução-de-problemas)**
-
----
-
-## 📊 **ESPECIFICAÇÕES TÉCNICAS**
-
-- **🎯 Compatibilidade**: macOS 13.0+ (Ventura, Sonoma, Sequoia)
-- **📏 Tamanho**: 440KB (instalador DMG)
-- **⚡ Performance**: < 0.1% CPU, ~10MB RAM
-- **🔐 Permissões**: Apenas Acessibilidade (para atalhos)
-- **🌐 Network**: Nenhuma conexão necessária
-- **💾 Armazenamento**: Local apenas
-
----
-
-## 🔧 **PARA DESENVOLVEDORES**
-
-### **Build Local**
+### A partir do código (uso local)
 
 ```bash
-# Clone o repositório
-git clone [REPO_URL]
-cd ClipboardManager
-
-# Build automático
-./scripts/build_distribution.sh
-
-# Instalação com correções
-./fix_and_install.sh
+git clone https://github.com/xulioguimaraes/XGBoard.git
+cd XGBoard
+./scripts/build_simple.sh
+./clean_install.sh
 ```
 
-### **Scripts Disponíveis**
+`clean_install.sh` encerra processos do XGBoard, reseta o TCC do bundle, copia o `.app` para `/Applications` e abre.
 
-- `build_dmg.sh` - Gera instalador DMG
-- `fix_permissions_persistence.sh` - Corrige permissões
-- `fix_ghost_entry.sh` - Remove entradas fantasma
-- `nuclear_remove_accessibility.sh` - Reset total
+### A partir de instalador
 
-### **Estrutura do Projeto**
+- **DMG**: `XGBoard-v2.0-Installer.dmg` (gerado por `./scripts/build_dmg.sh`) — arraste para Applications.
+- **ZIP**: `XGBoard-v2.0-macOS.zip` (gerado por `./scripts/build_distribution.sh`) — extrair e mover para Applications.
+
+> Builds não assinados (sem Apple Developer ID) podem mostrar o aviso de "app de desenvolvedor não identificado" na primeira execução. Para abrir mesmo assim: `Configurações do Sistema → Privacidade e Segurança → Abrir mesmo assim`.
+
+### Atalho global
+
+A partir da v2, o atalho global usa Carbon e funciona sem nenhuma permissão. Não é necessário ir em "Acessibilidade" — basta abrir o app uma vez.
+
+---
+
+## Configurações
+
+Disponíveis em **Configurações** (item da barra de status):
+
+- Número máximo de itens no histórico (10–2000)
+- Intervalo de monitoramento da área de transferência (0.1 / 0.5 / 1.0 s)
+- Atalho global (gravar combinação personalizada)
+- Tema (claro / escuro)
+- Iniciar automaticamente ao login
+
+---
+
+## Para desenvolvedores
+
+### Build
+
+```bash
+# Menu interativo
+./build_app.sh
+
+# Ou diretamente:
+./scripts/build_simple.sh         # .app em build/ (uso local)
+./scripts/build_distribution.sh   # .zip para distribuir
+./scripts/build_dmg.sh            # instalador DMG (requer brew install create-dmg)
+./scripts/build_professional.sh   # com assinatura Developer ID (requer Apple Developer Account)
+```
+
+### Estrutura
 
 ```
 ClipboardManager/
-├── ClipboardManager/          # Código Swift
-├── Resources/                 # Ícones e assets
-├── scripts/                   # Scripts de build
-├── build/                     # Arquivos gerados
-└── INSTALAÇÃO.md             # Guia completo
+  ClipboardManagerApp.swift   AppDelegate, status bar, NSPanel manager
+  ContentView.swift           Picker compacto (lista + busca + footer)
+  ClipboardMonitor.swift      Singleton, polling NSPasteboard, dedup por SHA-256
+  ClipboardStore.swift        Persistência em Application Support + migração
+  ClipboardItem.swift         Modelo de dados
+  HotKeyManager.swift         Carbon RegisterEventHotKey
+  SettingsView.swift          Configurações + gravador de atalho
+Resources/                    Ícones e assets
+scripts/                      Scripts de build
+clean_install.sh              Instalação limpa (kill + tccutil reset + copy)
+CHANGELOG.md                  Histórico de versões
 ```
 
----
+### Stack
 
-## 🆕 **CHANGELOG**
-
-### **v1.1 (Atual)**
-- ✅ **Corrigido**: Problema de permissões persistentes
-- ✅ **Melhorado**: Bundle ID único para evitar conflitos
-- ✅ **Adicionado**: Scripts de diagnóstico e correção
-- ✅ **Otimizado**: Interface de instalação DMG
-
-### **v1.0**
-- 🎉 **Lançamento inicial**
-- 📋 Histórico de clipboard básico
-- ⌨️ Atalho global Cmd+F2
+- Swift 5.0, SwiftUI + AppKit
+- macOS 13.0+ (target)
+- Sem dependências externas (apenas frameworks do sistema)
+- Carbon HIToolbox para atalho global
+- ServiceManagement (SMAppService) para login item
+- CryptoKit para hash de deduplicação
 
 ---
 
-## ✅ **VERIFICAÇÃO DE INSTALAÇÃO**
+## Changelog
 
-Antes de considerar instalado, confirme:
-
-- [ ] ✅ XGBoard em `/Applications`
-- [ ] ✅ Permissão de acessibilidade ativa
-- [ ] ✅ `Cmd+F2` abre a interface
-- [ ] ✅ Ícone na barra superior
-- [ ] ✅ Histórico funcionando
-- [ ] ✅ Busca operacional
-
-**🎉 Todos marcados? Instalação PERFEITA!**
+Ver [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
-## 📞 **SUPORTE & CONTRIBUIÇÃO**
+## Licença
 
-### **🐛 Bug ou Sugestão?**
-- Consulte [INSTALAÇÃO.md](INSTALAÇÃO.md) primeiro
-- Execute scripts de diagnóstico
-- Abra uma issue detalhada
-
-### **🤝 Contribuir**
-- Fork o projeto
-- Crie uma branch para sua feature
-- Submeta um Pull Request
-
-### **📧 Contato**
-- **Desenvolvedor**: [Seu Nome]
-- **Versão**: 1.1
-- **Suporte**: Via GitHub Issues
-
----
-
-## 📄 **LICENÇA**
-
-Este projeto está licenciado sob a MIT License - veja [LICENSE](LICENSE) para detalhes.
-
----
-
-<div align="center">
-
-**⭐ Gostou? Deixe uma estrela!**
-
-*XGBoard v1.1 - Seu clipboard nunca mais será o mesmo!* 🚀
-
-</div>
+MIT — ver [LICENSE](LICENSE).
