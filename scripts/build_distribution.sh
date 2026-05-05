@@ -41,12 +41,12 @@ if [ $? -eq 0 ]; then
         # Comprimir em ZIP para distribuição
         echo "📦 Criando arquivo de distribuição..."
         cd build
-        zip -r "XGBoard-v1.0-macOS.zip" "$APP_NAME"
+        zip -r "XGBoard-v2.0-macOS.zip" "$APP_NAME"
         cd ..
         
         echo ""
         echo "🎉 SUCESSO!"
-        echo "📁 Arquivo gerado: build/XGBoard-v1.0-macOS.zip"
+        echo "📁 Arquivo gerado: build/XGBoard-v2.0-macOS.zip"
         echo "📱 App individual: build/$APP_NAME"
         echo ""
         echo "💡 COMO DISTRIBUIR:"
@@ -61,7 +61,7 @@ if [ $? -eq 0 ]; then
         echo "• Para evitar avisos, use a opção 4 (Build Profissional)"
         
         # Mostrar tamanho do arquivo
-        SIZE=$(du -h "build/XGBoard-v1.0-macOS.zip" | cut -f1)
+        SIZE=$(du -h "build/XGBoard-v2.0-macOS.zip" | cut -f1)
         echo "📏 Tamanho do arquivo: $SIZE"
         
         # Abrir pasta no Finder

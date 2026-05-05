@@ -49,10 +49,10 @@ echo "📜 Usando certificado: $CERT_NAME"
 
 # Build com assinatura
 xcodebuild -project ClipboardManager.xcodeproj \
-    -scheme ClipboardManager \
+    -scheme XGBoard \
     -configuration Release \
     -derivedDataPath build/DerivedData \
-    -archivePath build/ClipboardManager.xcarchive \
+    -archivePath build/XGBoard.xcarchive \
     archive \
     CODE_SIGN_IDENTITY="$CERT_NAME"
 
@@ -60,7 +60,7 @@ if [ $? -eq 0 ]; then
     echo "✅ Compilação assinada bem-sucedida!"
     
     # Extrair e processar
-    APP_PATH=$(find build/ClipboardManager.xcarchive -name "*.app" -type d | head -1)
+    APP_PATH=$(find build/XGBoard.xcarchive -name "*.app" -type d | head -1)
     cp -R "$APP_PATH" build/
     APP_NAME=$(basename "$APP_PATH")
     
@@ -81,17 +81,17 @@ if [ $? -eq 0 ]; then
                 --volname "XGBoard" \
                 --window-size 800 400 \
                 --app-drop-link 600 185 \
-                "build/XGBoard-v1.0-Signed.dmg" \
+                "build/XGBoard-v2.0-Signed.dmg" \
                 "build/$APP_NAME"
                 
             # Assinar o DMG também
-            codesign -s "$CERT_NAME" "build/XGBoard-v1.0-Signed.dmg"
+            codesign -s "$CERT_NAME" "build/XGBoard-v2.0-Signed.dmg"
         fi
         
         echo ""
         echo "🎉 BUILD PROFISSIONAL CONCLUÍDO!"
         echo "📁 App assinado: build/$APP_NAME"
-        echo "💿 DMG assinado: build/XGBoard-v1.0-Signed.dmg"
+        echo "💿 DMG assinado: build/XGBoard-v2.0-Signed.dmg"
         echo ""
         echo "✅ BENEFÍCIOS:"
         echo "• Sem avisos de segurança"
