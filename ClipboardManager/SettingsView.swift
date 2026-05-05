@@ -1,252 +1,250 @@
 import SwiftUI
 import ServiceManagement
+import Carbon.HIToolbox
 
 struct SettingsView: View {
     @AppStorage("maxItems") private var maxItems: Int = 500
     @AppStorage("startAtLogin") private var startAtLogin: Bool = true
-    @AppStorage("showInDock") private var showInDock: Bool = false
     @AppStorage("darkMode") private var darkMode: Bool = true
     @AppStorage("monitoringInterval") private var monitoringInterval: Double = 0.5
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Configurações")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            
+
             Divider()
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Aparência")
-                    .font(.headline)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                  
-                    
-                    Picker("Tema", selection: $darkMode) {
-                        HStack {
-                            Image(systemName: "moon.fill")
-                           
-                        }
-                        .tag(true)
-                        
-                        HStack {
-                            Image(systemName: "sun.max.fill")
-                            
-                        }
-                        .tag(false)
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
-                    .onChange(of: darkMode) { value in
-                        updateAppearance(darkMode: value)
-                    }
-                }
-                
-                Toggle("Mostrar no Dock", isOn: $showInDock)
-                    .onChange(of: showInDock) { value in
-                        updateAppPolicy(showInDock: value)
-                    }
-            }
-            
+
+            appearanceSection
             Divider()
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Geral")
-                    .font(.headline)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Número máximo de itens:")
-                        Spacer()
-                        
-                        VStack(alignment: .trailing, spacing: 4) {
-                            HStack {
-                                TextField("", value: $maxItems, format: .number)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .frame(width: 80)
-                                    .onSubmit {
-                                        // Validar entrada
-                                        if maxItems < 10 {
-                                            maxItems = 10
-                                        } else if maxItems > 2000 {
-                                            maxItems = 2000
-                                        }
-                                    }
-                                
-                                Stepper("", value: $maxItems, in: 10...2000, step: 50)
-                                    .labelsHidden()
-                            }
-                            
-                            Text("Padrão: 500 itens")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    
-                    Text("Define quantos itens do histórico serão mantidos em memória.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 2)
-                }
-                
-                HStack {
-                    Text("Intervalo de monitoramento:")
-                    Spacer()
-                    Picker("Intervalo", selection: $monitoringInterval) {
-                        Text("Rápido (0.1s)").tag(0.1)
-                        Text("Normal (0.5s)").tag(0.5)
-                        Text("Lento (1.0s)").tag(1.0)
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                    .frame(width: 120)
-                }
-            }
-            
+            generalSection
             Divider()
-            
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Sistema")
-                    .font(.headline)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Toggle("Iniciar automaticamente ao ligar o computador", isOn: $startAtLogin)
-                                .onChange(of: startAtLogin) { value in
-                                    setLoginItem(enabled: value)
-                                }
-                            
-                            Text("Recomendado: Manter ativo para melhor experiência")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if startAtLogin {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
-            }
-            
+            shortcutSection
+            Divider()
+            systemSection
+
             Spacer()
-            
-            VStack(spacing: 12) {
-                Divider()
-                
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("💡 Dicas:")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                        
-                        Text("• Use Cmd+F2 para abrir rapidamente")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        
-                        Text("• Clique no ícone da barra de status")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+            footer
+        }
+        .padding(20)
+        .frame(width: 480, height: 720)
+        .preferredColorScheme(darkMode ? .dark : .light)
+    }
+
+    private var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Aparência").font(.headline)
+
+            Picker("Tema", selection: $darkMode) {
+                Label("Escuro", systemImage: "moon.fill").tag(true)
+                Label("Claro", systemImage: "sun.max.fill").tag(false)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .onChange(of: darkMode) { value in
+                updateAppearance(darkMode: value)
+            }
+        }
+    }
+
+    private var generalSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Geral").font(.headline)
+
+            HStack {
+                Text("Número máximo de itens:")
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack {
+                        TextField("", value: $maxItems, format: .number)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 80)
+                            .onSubmit {
+                                if maxItems < 10 { maxItems = 10 }
+                                else if maxItems > 2000 { maxItems = 2000 }
+                            }
+                        Stepper("", value: $maxItems, in: 10...2000, step: 50)
+                            .labelsHidden()
                     }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("XGBoard v1.1")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text("macOS 13.0+")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
+                    Text("Padrão: 500 itens").font(.caption2).foregroundColor(.secondary)
+                }
+            }
+
+            Text("Define quantos itens do histórico serão mantidos.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            HStack {
+                Text("Intervalo de monitoramento:")
+                Spacer()
+                Picker("Intervalo", selection: $monitoringInterval) {
+                    Text("Rápido (0.1s)").tag(0.1)
+                    Text("Normal (0.5s)").tag(0.5)
+                    Text("Lento (1.0s)").tag(1.0)
+                }
+                .pickerStyle(MenuPickerStyle())
+                .frame(width: 120)
+            }
+        }
+    }
+
+    private var shortcutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Atalho Global").font(.headline)
+            ShortcutRecorder()
+            Text("Pressione a combinação para gravar. Use Cmd+Shift+V (padrão) ou outra de sua preferência.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var systemSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Sistema").font(.headline)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Toggle("Iniciar automaticamente ao ligar o computador", isOn: $startAtLogin)
+                        .onChange(of: startAtLogin) { value in setLoginItem(enabled: value) }
+                    Text("Recomendado: manter ativo para melhor experiência")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if startAtLogin {
+                    Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
                 }
             }
         }
-        .padding(20)
-        .frame(width: 480, height: 650)
-        .preferredColorScheme(darkMode ? .dark : .light)
     }
-    
+
+    private var footer: some View {
+        VStack(spacing: 12) {
+            Divider()
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Dicas:").font(.caption).fontWeight(.semibold)
+                    Text("• Use o atalho global para abrir rapidamente")
+                        .font(.caption2).foregroundColor(.secondary)
+                    Text("• Clique no ícone da barra de status")
+                        .font(.caption2).foregroundColor(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("XGBoard v2.0").font(.caption).foregroundColor(.secondary)
+                    Text("macOS 13.0+").font(.caption2).foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
     private func updateAppearance(darkMode: Bool) {
         DispatchQueue.main.async {
             for window in NSApp.windows {
                 window.appearance = darkMode ? NSAppearance(named: .darkAqua) : NSAppearance(named: .aqua)
             }
-            
-            print("🎨 Tema alterado para: \(darkMode ? "Escuro" : "Claro")")
         }
     }
-    
-    private func updateAppPolicy(showInDock: Bool) {
-        DispatchQueue.main.async {
-            // Mudanças de política de ativação agora são gerenciadas pelo AppDelegate
-            // para evitar crashes relacionados ao gerenciamento de janelas
-            print("🔄 Configuração de política de ativação alterada: \(showInDock ? "Dock visível" : "Apenas barra de status")")
-            
-            if showInDock {
-                NSApp.setActivationPolicy(.regular)
-            } else {
-                NSApp.setActivationPolicy(.accessory)
-            }
-        }
-    }
-    
+
     private func setLoginItem(enabled: Bool) {
-        if enabled {
-            // Usar implementação simplificada com ServiceManagement framework para macOS 13+
-            if #available(macOS 13.0, *) {
-                do {
+        if #available(macOS 13.0, *) {
+            do {
+                if enabled {
                     if SMAppService.mainApp.status == .notRegistered {
                         try SMAppService.mainApp.register()
-                        print("✅ XGBoard adicionado aos itens de login")
-                    } else {
-                        print("ℹ️ XGBoard já está nos itens de login")
                     }
-                } catch {
-                    print("❌ Erro ao adicionar aos itens de login: \(error)")
-                    // Fallback para método manual
-                    addToLoginItemsManually()
-                }
-            } else {
-                // Fallback para versões mais antigas
-                addToLoginItemsManually()
-            }
-        } else {
-            // Remover dos itens de login
-            if #available(macOS 13.0, *) {
-                do {
+                } else {
                     if SMAppService.mainApp.status != .notRegistered {
                         try SMAppService.mainApp.unregister()
-                        print("✅ XGBoard removido dos itens de login")
-                    } else {
-                        print("ℹ️ XGBoard não estava nos itens de login")
                     }
-                } catch {
-                    print("❌ Erro ao remover dos itens de login: \(error)")
-                    // Fallback para método manual
-                    removeFromLoginItemsManually()
                 }
-            } else {
-                // Fallback para versões mais antigas
-                removeFromLoginItemsManually()
+            } catch {
+                print("⚠️ Login item: \(error.localizedDescription)")
             }
         }
     }
-    
-    private func addToLoginItemsManually() {
-        print("🔄 Usando método manual para adicionar aos itens de login")
-        print("💡 Para ativar manualmente: Configurações do Sistema > Geral > Itens de Login")
+}
+
+struct ShortcutRecorder: View {
+    @State private var combo: HotKeyCombo = HotKeyManager.shared.currentCombo
+    @State private var isRecording = false
+    @State private var monitor: Any?
+    @State private var feedback: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("Atalho:").frame(width: 70, alignment: .leading)
+
+            Button(action: toggleRecording) {
+                Text(isRecording ? "Pressione a combinação…" : combo.displayString)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minWidth: 180)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isRecording ? Color.blue.opacity(0.15) : Color.secondary.opacity(0.1))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(isRecording ? Color.blue : Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+
+            Button("Padrão") {
+                apply(.default)
+            }
+            .help("Restaurar Cmd+Shift+V")
+
+            if let feedback {
+                Text(feedback)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .onDisappear { stopRecording() }
     }
-    
-    private func removeFromLoginItemsManually() {
-        print("🔄 Usando método manual para remover dos itens de login")
-        print("💡 Para desativar manualmente: Configurações do Sistema > Geral > Itens de Login")
+
+    private func toggleRecording() {
+        if isRecording { stopRecording() } else { startRecording() }
+    }
+
+    private func startRecording() {
+        isRecording = true
+        feedback = nil
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handle(event: event)
+            return nil
+        }
+    }
+
+    private func stopRecording() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        isRecording = false
+    }
+
+    private func handle(event: NSEvent) {
+        let mods = HotKeyCombo.carbonModifiers(from: event.modifierFlags)
+        guard mods != 0 else {
+            feedback = "Use ao menos um modificador (⌘ ⌥ ⌃ ⇧)."
+            return
+        }
+        let candidate = HotKeyCombo(keyCode: UInt32(event.keyCode), carbonModifiers: mods)
+        apply(candidate)
+        stopRecording()
+    }
+
+    private func apply(_ candidate: HotKeyCombo) {
+        if HotKeyManager.shared.register(candidate) {
+            combo = candidate
+            feedback = "Atalho atualizado: \(candidate.displayString)"
+        } else {
+            feedback = "Não foi possível registrar (combinação já em uso)."
+        }
     }
 }
 
 #Preview {
     SettingsView()
-} 
+}
