@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var clipboardMonitor = ClipboardMonitor()
+    @EnvironmentObject var clipboardMonitor: ClipboardMonitor
     @State private var searchText = ""
     @State private var selectedType: ClipboardItemType? = nil
     @State private var selectedItem: ClipboardItem? = nil
@@ -131,12 +131,6 @@ struct ContentView: View {
                 .animation(.easeInOut(duration: 0.3), value: showToast),
             alignment: .top
         )
-        .onAppear {
-            clipboardMonitor.startMonitoring()
-        }
-        .onDisappear {
-            clipboardMonitor.stopMonitoring()
-        }
     }
     
     private func showCopyToast() {
@@ -840,4 +834,5 @@ struct DetailActionButtons: View {
 
 #Preview {
     ContentView()
-} 
+        .environmentObject(ClipboardMonitor.shared)
+}
