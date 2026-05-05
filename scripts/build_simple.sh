@@ -12,11 +12,14 @@ echo "🔨 Compilando aplicativo..."
 
 # Build básico para teste local
 xcodebuild -project ClipboardManager.xcodeproj \
-    -scheme ClipboardManager \
+    -scheme XGBoard \
     -configuration Release \
     -derivedDataPath build/DerivedData \
-    -archivePath build/ClipboardManager.xcarchive \
-    archive
+    -archivePath build/XGBoard.xcarchive \
+    archive \
+    CODE_SIGN_IDENTITY="" \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGNING_ALLOWED=NO
 
 if [ $? -eq 0 ]; then
     echo "✅ Compilação bem-sucedida!"
@@ -25,7 +28,7 @@ if [ $? -eq 0 ]; then
     echo "📦 Extraindo aplicativo..."
     
     # Encontrar o .app dentro do archive
-    APP_PATH=$(find build/ClipboardManager.xcarchive -name "*.app" -type d | head -1)
+    APP_PATH=$(find build/XGBoard.xcarchive -name "*.app" -type d | head -1)
     
     if [ -n "$APP_PATH" ]; then
         # Copiar .app para pasta de build

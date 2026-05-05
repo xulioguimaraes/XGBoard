@@ -46,13 +46,13 @@ create-dmg \
     --icon "$APP_NAME" 200 190 \
     --hide-extension "$APP_NAME" \
     --app-drop-link 600 185 \
-    "build/XGBoard-v1.0-Installer.dmg" \
+    "build/XGBoard-v2.0-Installer.dmg" \
     "build/$APP_NAME"
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "🎉 DMG CRIADO COM SUCESSO!"
-    echo "📁 Arquivo: build/XGBoard-v1.0-Installer.dmg"
+    echo "📁 Arquivo: build/XGBoard-v2.0-Installer.dmg"
     echo ""
     echo "💡 COMO USAR O DMG:"
     echo "• Duplo-clique no arquivo .dmg"
@@ -66,7 +66,7 @@ if [ $? -eq 0 ]; then
     echo "• Fácil distribuição"
     
     # Mostrar tamanho
-    SIZE=$(du -h "build/XGBoard-v1.0-Installer.dmg" | cut -f1)
+    SIZE=$(du -h "build/XGBoard-v2.0-Installer.dmg" | cut -f1)
     echo "📏 Tamanho: $SIZE"
     
     # Abrir pasta
