@@ -4,7 +4,7 @@ Gerenciador de área de transferência nativo para macOS, no estilo Win+V do Win
 
 <div align="center">
 
-![XGBoard](Resources/XGBoard-Icon.png)
+<img src="Resources/XGBoard-Icon.png" alt="XGBoard" width="180">
 
 [![macOS](https://img.shields.io/badge/macOS-13.0+-blue.svg)](https://www.apple.com/macos/)
 [![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)](https://swift.org/)
