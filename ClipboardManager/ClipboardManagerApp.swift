@@ -17,8 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let hotKeyManager = HotKeyManager.shared
 
     private var statusItem: NSStatusItem?
-    private var mainWindow: NSWindow?
+    private var pickerPanel: NSPanel?
     private var settingsWindow: NSWindow?
+
+    private let pickerSize = NSSize(width: 360, height: 460)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -26,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         clipboardMonitor.startMonitoring()
 
         hotKeyManager.onPressed = { [weak self] in
-            self?.toggleMainWindow()
+            self?.togglePicker()
         }
         if !hotKeyManager.registerCurrentCombo() {
             print("⚠️ Atalho global não pôde ser registrado — talvez outra app já o use.")
@@ -48,7 +50,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.image = NSImage(systemSymbolName: "doc.on.clipboard", accessibilityDescription: "XGBoard")
             button.action = #selector(statusBarButtonTapped(_:))
             button.target = self
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
         item.menu = makeStatusMenu()
         statusItem = item
@@ -57,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func makeStatusMenu() -> NSMenu {
         let menu = NSMenu()
 
-        let openItem = NSMenuItem(title: "Abrir XGBoard", action: #selector(openMainWindow), keyEquivalent: "o")
+        let openItem = NSMenuItem(title: "Abrir XGBoard", action: #selector(openPickerFromMenu), keyEquivalent: "o")
         openItem.target = self
         menu.addItem(openItem)
 
@@ -85,37 +86,88 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func statusBarButtonTapped(_ sender: Any?) {
-        toggleMainWindow()
+        togglePicker(anchorAtMouse: false)
     }
 
-    // MARK: - Windows
+    // MARK: - Picker panel
 
-    private func toggleMainWindow() {
-        if let window = mainWindow, window.isVisible {
-            window.performClose(nil)
+    private func togglePicker(anchorAtMouse: Bool = true) {
+        if let panel = pickerPanel, panel.isVisible {
+            panel.orderOut(nil)
         } else {
-            openMainWindow()
+            openPicker(anchorAtMouse: anchorAtMouse)
         }
     }
 
-    @objc private func openMainWindow() {
-        if let window = mainWindow {
-            present(window: window)
-            return
-        }
-        let view = ContentView().environmentObject(clipboardMonitor)
-        let window = makeWindow(
-            title: "XGBoard",
-            size: NSSize(width: 900, height: 600),
-            rootView: view
-        )
-        mainWindow = window
-        present(window: window)
+    @objc private func openPickerFromMenu() {
+        openPicker(anchorAtMouse: false)
     }
+
+    private func openPicker(anchorAtMouse: Bool) {
+        let panel = pickerPanel ?? makePickerPanel()
+        pickerPanel = panel
+
+        if anchorAtMouse {
+            position(panel, near: NSEvent.mouseLocation)
+        } else if let button = statusItem?.button, let window = button.window {
+            let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
+            let anchor = NSPoint(x: buttonFrame.midX, y: buttonFrame.minY)
+            position(panel, near: anchor)
+        } else {
+            position(panel, near: NSEvent.mouseLocation)
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+        panel.makeKeyAndOrderFront(nil)
+    }
+
+    private func makePickerPanel() -> NSPanel {
+        let panel = NSPanel(
+            contentRect: NSRect(origin: .zero, size: pickerSize),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.isFloatingPanel = true
+        panel.level = .popUpMenu
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.hidesOnDeactivate = false
+        panel.isMovableByWindowBackground = true
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.becomesKeyOnlyIfNeeded = false
+        panel.worksWhenModal = true
+        panel.delegate = self
+        panel.isReleasedWhenClosed = false
+
+        let view = ContentView().environmentObject(clipboardMonitor)
+        let hosting = NSHostingView(rootView: view)
+        hosting.frame = NSRect(origin: .zero, size: pickerSize)
+        panel.contentView = hosting
+        return panel
+    }
+
+    private func position(_ window: NSWindow, near point: NSPoint) {
+        let size = window.frame.size
+        let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) })
+            ?? NSScreen.main
+            ?? NSScreen.screens.first
+
+        var origin = NSPoint(x: point.x - 16, y: point.y - size.height + 16)
+
+        if let visible = screen?.visibleFrame {
+            origin.x = max(visible.minX + 8, min(origin.x, visible.maxX - size.width - 8))
+            origin.y = max(visible.minY + 8, min(origin.y, visible.maxY - size.height - 8))
+        }
+        window.setFrameOrigin(origin)
+    }
+
+    // MARK: - Settings window
 
     @objc private func openSettings() {
         if let window = settingsWindow {
-            present(window: window)
+            present(window: window, activate: true)
             return
         }
         let view = SettingsView()
@@ -126,7 +178,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             resizable: false
         )
         settingsWindow = window
-        present(window: window)
+        present(window: window, activate: true)
     }
 
     private func makeWindow<RootView: View>(
@@ -153,8 +205,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return window
     }
 
-    private func present(window: NSWindow) {
-        NSApp.activate(ignoringOtherApps: true)
+    private func present(window: NSWindow, activate: Bool) {
+        if activate { NSApp.activate(ignoringOtherApps: true) }
         window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
     }
@@ -165,16 +217,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let alert = NSAlert()
         alert.messageText = "Como Usar o XGBoard"
         alert.informativeText = """
-        Funcionalidades:
-        • Monitoramento automático: tudo que você copiar (Cmd+C) é salvo no histórico.
-        • Atalho global: \(hotKeyManager.currentCombo.displayString) abre o XGBoard rapidamente.
-        • Lista à esquerda, detalhes à direita.
-        • Favoritos: clique no coração.
-
-        Como usar:
-        1. Copie qualquer texto, imagem ou arquivo normalmente.
-        2. Use o atalho ou o ícone na barra de status.
-        3. Clique para ver detalhes; duplo-clique para copiar de volta.
+        • \(hotKeyManager.currentCombo.displayString) abre o XGBoard onde estiver o cursor.
+        • Digite para filtrar; ↑/↓ para navegar.
+        • ↩ ou clique para copiar e fechar.
+        • ⎋ para fechar sem copiar.
+        • Clique direito em um item para favoritar ou apagar.
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Entendi")
@@ -205,7 +252,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 extension AppDelegate: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow else { return }
-        if window === mainWindow { mainWindow = nil }
         if window === settingsWindow { settingsWindow = nil }
+        if window === pickerPanel { pickerPanel = nil }
+    }
+
+    func windowDidResignKey(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow,
+              window === pickerPanel else { return }
+        window.orderOut(nil)
     }
 }
