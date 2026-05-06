@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Carbon.HIToolbox
 
 @main
 struct XGBoardApp: App {
@@ -13,12 +14,19 @@ struct XGBoardApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    static var shared: AppDelegate? { NSApp.delegate as? AppDelegate }
+
     private let clipboardMonitor = ClipboardMonitor.shared
     private let hotKeyManager = HotKeyManager.shared
 
     private var statusItem: NSStatusItem?
     private var pickerPanel: NSPanel?
     private var settingsWindow: NSWindow?
+
+    /// App que estava em foreground ANTES do picker abrir — alvo do auto-paste.
+    private var previousApp: NSRunningApplication?
+    /// Monitor global de cliques (fora do panel) para fechar o picker.
+    private var globalClickMonitor: Any?
 
     private let pickerSize = NSSize(width: 360, height: 460)
 
@@ -34,10 +42,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             print("⚠️ Atalho global não pôde ser registrado — talvez outra app já o use.")
         }
 
-        print("✅ XGBoard pronto — atalho \(hotKeyManager.currentCombo.displayString)")
+        // Acessibilidade habilita auto-paste (CGEvent Cmd+V) e fechar-ao-clicar-fora
+        // (NSEvent.addGlobalMonitorForEvents). Pede prompt 1x; se negado, app
+        // continua funcionando — usuario apenas perde essas duas conveniencias.
+        let granted = ensureAccessibilityPermission(prompt: true)
+        print("✅ XGBoard pronto — atalho \(hotKeyManager.currentCombo.displayString) · acessibilidade=\(granted)")
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        uninstallGlobalClickMonitor()
         clipboardMonitor.stopMonitoring()
         hotKeyManager.unregister()
     }
@@ -93,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func togglePicker(anchorAtMouse: Bool = true) {
         if let panel = pickerPanel, panel.isVisible {
-            panel.orderOut(nil)
+            dismissPicker(restoreFocus: true, autoPaste: false)
         } else {
             openPicker(anchorAtMouse: anchorAtMouse)
         }
@@ -104,6 +117,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func openPicker(anchorAtMouse: Bool) {
+        // Captura quem estava em foreground ANTES de ativarmos o nosso app.
+        if let frontApp = NSWorkspace.shared.frontmostApplication,
+           frontApp.bundleIdentifier != Bundle.main.bundleIdentifier {
+            previousApp = frontApp
+        }
+
         let panel = pickerPanel ?? makePickerPanel()
         pickerPanel = panel
 
@@ -119,6 +138,70 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         panel.makeKeyAndOrderFront(nil)
+        installGlobalClickMonitor()
+    }
+
+    /// Seleciona um item: copia para o clipboard, fecha o picker, restaura o app
+    /// anterior e (se Acessibilidade estiver concedida) dispara Cmd+V automatico.
+    func pickAndPaste(_ item: ClipboardItem) {
+        clipboardMonitor.copyItem(item)
+        dismissPicker(restoreFocus: true, autoPaste: true)
+    }
+
+    func dismissPicker(restoreFocus: Bool, autoPaste: Bool) {
+        uninstallGlobalClickMonitor()
+        pickerPanel?.orderOut(nil)
+
+        let target = previousApp
+        previousApp = nil
+
+        guard restoreFocus, let target else { return }
+        target.activate(options: [.activateIgnoringOtherApps])
+
+        guard autoPaste else { return }
+        // Pequeno delay para o app anterior recuperar foco antes do post.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            Self.simulatePasteShortcut()
+        }
+    }
+
+    private func installGlobalClickMonitor() {
+        guard globalClickMonitor == nil else { return }
+        globalClickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { [weak self] _ in
+            self?.dismissPicker(restoreFocus: true, autoPaste: false)
+        }
+    }
+
+    private func uninstallGlobalClickMonitor() {
+        if let monitor = globalClickMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+        globalClickMonitor = nil
+    }
+
+    /// Posta Cmd+V no app frontmost (que ja foi reativado).
+    /// Requer permissao de Acessibilidade.
+    private static func simulatePasteShortcut() {
+        let source = CGEventSource(stateID: .combinedSessionState)
+        let keyV = CGKeyCode(kVK_ANSI_V)
+        guard
+            let down = CGEvent(keyboardEventSource: source, virtualKey: keyV, keyDown: true),
+            let up = CGEvent(keyboardEventSource: source, virtualKey: keyV, keyDown: false)
+        else { return }
+        down.flags = .maskCommand
+        up.flags = .maskCommand
+        down.post(tap: .cgAnnotatedSessionEventTap)
+        up.post(tap: .cgAnnotatedSessionEventTap)
+    }
+
+    /// Pede permissao de Acessibilidade ao sistema (mostra prompt apenas uma vez).
+    @discardableResult
+    func ensureAccessibilityPermission(prompt: Bool = true) -> Bool {
+        let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
+        let options: [String: Bool] = [key as String: prompt]
+        return AXIsProcessTrustedWithOptions(options as CFDictionary)
     }
 
     private func makePickerPanel() -> NSPanel {
@@ -219,9 +302,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.informativeText = """
         • \(hotKeyManager.currentCombo.displayString) abre o XGBoard onde estiver o cursor.
         • Digite para filtrar; ↑/↓ para navegar.
-        • ↩ ou clique para copiar e fechar.
-        • ⎋ para fechar sem copiar.
+        • ↩ ou clique no item: copia E cola automaticamente no campo onde voce estava.
+        • ⎋ ou clique fora do picker: fecha sem copiar.
         • Clique direito em um item para favoritar ou apagar.
+
+        Auto-paste e clique-fora-fecha exigem permissao de Acessibilidade
+        (Configuracoes do Sistema → Privacidade e Seguranca → Acessibilidade).
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Entendi")

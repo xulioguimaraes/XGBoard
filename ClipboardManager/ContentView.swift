@@ -132,12 +132,20 @@ struct ContentView: View {
 
     private func pick(at index: Int) {
         guard filteredItems.indices.contains(index) else { return }
-        monitor.copyItem(filteredItems[index])
-        closePanel()
+        let item = filteredItems[index]
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.pickAndPaste(item)
+        } else {
+            // Fallback (nao deveria acontecer em runtime normal)
+            monitor.copyItem(item)
+            closePanel()
+        }
     }
 
     private func closePanel() {
-        if let panel = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isVisible && $0 is NSPanel }) {
+        if let appDelegate = NSApp.delegate as? AppDelegate {
+            appDelegate.dismissPicker(restoreFocus: true, autoPaste: false)
+        } else if let panel = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isVisible && $0 is NSPanel }) {
             panel.orderOut(nil)
         }
     }
